@@ -1,0 +1,48 @@
+# Manager Scripts
+
+## Overview
+Specialized system managers that handle specific game subsystems and environmental effects.
+
+## Scripts in this Category
+
+### LeaderboardManager.ts
+**Scoring and leaderboard system** - Manages player statistics and rankings:
+- Score tracking and calculation
+- Leaderboard display and updates
+- Achievement and statistic management
+
+### LightManager.ts
+**Lighting system controller** - Dynamic lighting management:
+- Environmental lighting control
+- Time-of-day lighting changes
+- Atmospheric lighting effects
+
+### PartManager.ts
+**Game component management** - Manages game world parts and components:
+- Dynamic object spawning and management
+- Component lifecycle handling
+- World object coordination
+
+### SFXManager.ts
+**Sound effects system** - Audio management and playback:
+- Sound effect coordination
+- Audio event handling
+- Spatial audio management
+
+### WeatherManager.ts
+**Weather effects system** - Environmental weather control:
+- Weather pattern management
+- Visual weather effects (rain, fog, etc.)
+- Weather impact on gameplay
+
+### ShopManager.ts
+**Shop system backend** - Handles shop transactions and inventory:
+- Item purchase validation
+- Currency management
+- Weapon skin unlock system
+
+### GhostManager.ts
+**Spectator system** - Manages eliminated player experience:
+- Ghost/spectator mode logic
+- Camera and movement restrictions
+- Post-elimination interactions

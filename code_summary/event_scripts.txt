@@ -1,0 +1,25 @@
+# Event Scripts
+
+## Overview
+Event definition and management systems for game communication and coordination.
+
+## Scripts in this Category
+
+### Events.ts
+**Core game events** - Primary event definitions:
+- Network broadcast events
+- Local broadcast events
+- Game state change events
+- Player interaction events
+
+### LeaderboardEvents.ts
+**Leaderboard events** - Scoring and ranking events:
+- Score update events
+- Achievement events
+- Leaderboard refresh events
+
+### SFXEvents.ts
+**Sound effect events** - Audio-related event definitions:
+- Sound playback triggers
+- Audio state change events
+- Sound effect coordination events

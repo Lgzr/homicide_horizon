@@ -1,0 +1,34 @@
+# UI Scripts
+
+## Overview
+User interface components and displays for different game states, roles, and systems.
+
+## Scripts in this Category
+
+### HUDLocalUI.ts
+**Heads-up display** - Local player HUD elements:
+- Game state information display
+- Player status indicators
+- Real-time game information
+
+### InnocentUI.ts
+**Innocent role interface** - UI elements specific to innocent players:
+- Role-specific information and controls
+- Survival indicators and warnings
+
+### ShopUI.ts
+**Shop interface system** - In-game shop UI:
+- Item purchasing interface
+- Currency display and transaction handling
+- Weapon skin selection UI
+
+### GhostUI.ts
+**Spectator/ghost interface** - UI for eliminated players:
+- Spectator mode controls
+- Post-elimination information display
+- Rejoin or observe options
+
+### MurdererUI.ts
+**Murderer role interface** - UI elements for murderer players:
+- Murderer-specific status displays
+- Weapon status and charge indicators

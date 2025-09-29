@@ -1,0 +1,36 @@
+# Utility Scripts
+
+## Overview
+Utility functions, helper classes, and specialized systems that support the main game functionality.
+
+## Scripts in this Category
+
+### DebugScript.ts
+**Debugging utilities** - Development and testing tools:
+- Debug logging and monitoring
+- Test functions and utilities
+- Development helper methods
+
+### Player.ts
+**Player entity wrapper** - Player object utilities and extensions:
+- Player data management
+- Player state utilities
+- Player interaction helpers
+
+### ProjectileScript.ts
+**Projectile physics system** - Manages thrown/projectile objects:
+- Physics calculations for thrown items
+- Projectile trajectory and collision
+- Impact effects and damage calculation
+
+### ShopUtil.ts
+**Shop utilities** - Shop system helper functions:
+- Pricing calculations
+- Inventory management utilities
+- Shop transaction helpers
+
+### QuestManager.ts
+**Quest system** - Manages player quests and objectives:
+- Quest progression tracking
+- Objective completion logic
+- Reward distribution system

@@ -1,0 +1,40 @@
+# Murderer Scripts
+
+## Overview
+Scripts related to the murderer role mechanics, weapon systems, and murderer-specific gameplay features.
+
+## Scripts in this Category
+
+### KnifeController.ts
+**Primary knife weapon controller** - Handles all knife-related mechanics including:
+- Throwing mechanics with charge-up system (15-50 force range)
+- Attack/stabbing functionality
+- Holstering and unholstering
+- Camera switching between first-person and third-person modes
+- Input handling for desktop (mouse/keyboard) and mobile devices
+- Sound effects for stabbing, throwing, and hitting
+- Trail effects for thrown knives
+- Network synchronization for multiplayer
+
+### KnifeController_refactor.ts
+**Refactored knife controller** - Cleaner implementation of knife mechanics with:
+- Separated event registration methods (registerKillboxEvents, registerGameStateEvents)
+- Improved input handling and device-specific controls
+- Same core functionality as KnifeController.ts but with better code organization
+- Removed redundant Z-key binding (uses Horizon's built-in attachment system)
+
+### KnifeTableController.ts
+**Knife spawning and management** - Handles knife availability at designated tables/locations.
+
+### Murderer.ts
+**Murderer role component** - Manages murderer-specific state and events:
+- Tracks knife ownership and possession
+- Handles murderer selection events
+- Monitors knife grab/release events
+- Coordinates with server for murderer assignment
+
+### MurdererUI.ts
+**Murderer user interface** - UI elements and displays specific to the murderer role.
+
+### RevolverController.ts
+**Backup weapon system** - Secondary weapon controller for revolver mechanics.

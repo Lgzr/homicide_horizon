@@ -1,0 +1,43 @@
+# Game Core Scripts
+
+## Overview
+Core game systems that manage the fundamental game loop, state management, player roles, and server coordination.
+
+## Scripts in this Category
+
+### GameManager.ts
+**Main game state controller** - Orchestrates the entire game flow:
+- Game state management (WaitingForPlayers → Starting → PreRound → InProgress → Ending)
+- Round timing system (30s start, 15s pre-round, 7min main round, 15s end)
+- Win condition checking and game ending logic
+- Player minimum requirements and countdown management
+- Network event coordination for game state changes
+- Weather system integration
+
+### GameUtil.ts
+**Game utilities and definitions** - Core game constants and utilities:
+- GameState enum definitions
+- Events enum for network/local broadcasts
+- WinState conditions
+- MatchPlayers and PlayerRoles data structures
+- Utility functions for game logic
+
+### RoleManager.ts
+**Role assignment system** - Handles player role distribution:
+- Innocent and Murderer role assignment logic
+- Role balancing and randomization
+- Network synchronization of role assignments
+
+### PlayerManager.ts
+**Player lifecycle management** - Manages all player-related operations:
+- Player spawning at lobby/game locations
+- Player elimination tracking and stun mechanics
+- Role assignment coordination
+- End condition checking (all innocents dead, murderer eliminated)
+- Player state synchronization across network
+
+### Server.ts
+**Server-side game coordination** - Server authority systems:
+- Centralized game state management
+- Player validation and anti-cheat measures
+- Server-side event processing and validation

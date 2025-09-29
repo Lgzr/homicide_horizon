@@ -1,0 +1,48 @@
+# Controller Scripts
+
+## Overview
+Interactive object controllers that manage player interactions with game world elements.
+
+## Scripts in this Category
+
+### FlashlightController.ts
+**Flashlight item controller** - Manages flashlight functionality:
+- Light emission and battery life
+- Player interaction and controls
+- Light cone management
+
+### GeneratorController.ts
+**Power generator system** - Controls power generation mechanics:
+- Generator activation and maintenance
+- Power distribution to game systems
+- Generator failure and repair mechanics
+
+### PartController.ts
+**Individual part controller** - Manages specific game world parts:
+- Part interaction and manipulation
+- Component-specific behaviors
+- Part state management
+
+### PlayerCameraManager.ts
+**Camera control system** - Advanced camera management:
+- Camera mode switching (first/third person)
+- Camera positioning and smoothing
+- Player perspective control
+
+### DoorController.ts
+**Door interaction system** - Manages door mechanics:
+- Door opening/closing animations
+- Access control and locking
+- Interactive door behaviors
+
+### PropController.ts
+**Prop interaction controller** - Handles interactive props:
+- Prop manipulation and physics
+- Interactive object behaviors
+- Environmental object controls
+
+### TelephoneController.ts
+**Telephone system** - Manages telephone interactions:
+- Phone call mechanics
+- Communication system
+- Interactive phone behaviors
