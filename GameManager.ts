@@ -157,8 +157,7 @@ class GameManager extends hz.Component<typeof GameManager> {
         }
       }
     }, 1000);
-    // Logic to handle new match starting
-    // e.g., teleport players to game area, initialize roles, etc.
+
   }
 
   handlePreRoundStarted() {

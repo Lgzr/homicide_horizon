@@ -10,11 +10,9 @@ class KnifeController extends hz.Component<typeof KnifeController> {
   static propsDefinition = {
     knife: { type: hz.PropTypes.Entity },
     trail: { type: hz.PropTypes.Entity },
-    stabSFX: {type: hz.PropTypes.Entity},
-    throwSFX: {type: hz.PropTypes.Entity},
-    hitSFX: {type: hz.PropTypes.Entity},
-
-
+    stabSFX: { type: hz.PropTypes.Entity },
+    throwSFX: { type: hz.PropTypes.Entity },
+    hitSFX: { type: hz.PropTypes.Entity },
   };
 
   private murderer!: hz.Player;
@@ -39,44 +37,39 @@ class KnifeController extends hz.Component<typeof KnifeController> {
   preStart(): void {
     this.knife = (this.props.knife as hz.Entity) ?? this.entity;
     // Connect to the killbox trigger events if the killbox entity is assigned
-    
-      
-      
-    
 
-      this.connectCodeBlockEvent(
-        this.entity,
-        hz.CodeBlockEvents.OnEntityCollision,
-        (otherEntity: hz.Entity) => {
-          this.knifeCollidedWithEntity(otherEntity);
-        }
-      );
+    this.connectCodeBlockEvent(
+      this.entity,
+      hz.CodeBlockEvents.OnEntityCollision,
+      (otherEntity: hz.Entity) => {
+        this.knifeCollidedWithEntity(otherEntity);
+      }
+    );
 
-      this.connectCodeBlockEvent(
-        this.entity,
-        hz.CodeBlockEvents.OnPlayerCollision,
-        (player: hz.Player) => {
-          this.knifeCollidedWithPlayer(player);
-        }
-      );
+    this.connectCodeBlockEvent(
+      this.entity,
+      hz.CodeBlockEvents.OnPlayerCollision,
+      (player: hz.Player) => {
+        this.knifeCollidedWithPlayer(player);
+      }
+    );
 
-      this.connectNetworkBroadcastEvent<{ player: hz.Player }>(
-        Events.selectedMurderer,
-        (data: { player: hz.Player }) => {
-          console.log(
-            `[KnifeController] selectedMurderer event received for entity ${data.player.name.get()}`
-          );
-          this.murderer = data.player;
-          this.assignWhoCanPickup({ player: data.player });
-        }
-      );
+    this.connectNetworkBroadcastEvent<{ player: hz.Player }>(
+      Events.selectedMurderer,
+      (data: { player: hz.Player }) => {
+        console.log(
+          `[KnifeController] selectedMurderer event received for entity ${data.player.name.get()}`
+        );
+        this.murderer = data.player;
+        this.assignWhoCanPickup({ player: data.player });
+      }
+    );
 
-      this.connectLocalBroadcastEvent(
-        Events.gameStateChanged,
-        (data: { fromState: GameState; toState: GameState }) =>
-          this.handleGameStateChanged(data.fromState, data.toState)
-      );
-    
+    this.connectLocalBroadcastEvent(
+      Events.gameStateChanged,
+      (data: { fromState: GameState; toState: GameState }) =>
+        this.handleGameStateChanged(data.fromState, data.toState)
+    );
 
     // Connect to the grab event to cleanup when the weapon is dropped
     this.connectCodeBlockEvent(
@@ -91,15 +84,11 @@ class KnifeController extends hz.Component<typeof KnifeController> {
       this.knifeDropped.bind(this)
     );
 
-
     this.connectCodeBlockEvent(
       this.entity,
       hz.CodeBlockEvents.OnAttachEnd,
-      this.unholsterKnife.bind(this),
+      this.unholsterKnife.bind(this)
     );
-
-
-   
   }
 
   start() {
@@ -110,12 +99,12 @@ class KnifeController extends hz.Component<typeof KnifeController> {
 
   toggleKnife(action: hz.PlayerInputAction, pressed: boolean): void {
     if (!pressed) {
-      if(!this.knifeHolstered) {
+      if (!this.knifeHolstered) {
         this.holsterKnife();
         this.disconnectInputs();
       }
+    }
   }
-}
 
   handleGameStateChanged(fromState: GameState, toState: GameState) {
     if (toState === GameState.GameOver) {
@@ -178,8 +167,6 @@ class KnifeController extends hz.Component<typeof KnifeController> {
   }
 
   knifeDropped(player: hz.Player) {
-  
-
     this.knifeHeld = false; // Update state
 
     console.log(
@@ -208,12 +195,12 @@ class KnifeController extends hz.Component<typeof KnifeController> {
   knifeCollidedWithEntity(otherEntity: hz.Entity) {
     console.log(`Knife collided with ${otherEntity.name.get()}`);
     this.props.trail?.as(hz.TrailGizmo)?.stop();
-   
+
     // Handle knife collision logic
     // For example, if it hits a player, register an attack
     if (this.thrown) {
       const phys = this.entity.as?.(hz.PhysicalEntity);
-       this.props.hitSFX?.as(hz.AudioGizmo).play();
+      this.props.hitSFX?.as(hz.AudioGizmo).play();
       if (phys) {
         phys.interactionMode.set(hz.EntityInteractionMode.Grabbable);
       }
@@ -221,26 +208,30 @@ class KnifeController extends hz.Component<typeof KnifeController> {
     }
   }
 
-
-
   knifeCollidedWithPlayer(player: hz.Player) {
-    const shouldKill = player == this.owner || player == this.murderer || player == this.currentHolder;
-    console.log(`Knife collision: ${this.entity.name.get()} with ${player.name.get()}`);
+    const shouldKill =
+      player == this.owner ||
+      player == this.murderer ||
+      player == this.currentHolder;
+    console.log(
+      `Knife collision: ${this.entity.name.get()} with ${player.name.get()}`
+    );
     console.log(`Should kill: ${shouldKill}`);
     console.log(this.owner, this.murderer, this.currentHolder);
     if (this.thrown || this.knifeHeld) {
-if (!shouldKill) {
-      this.eliminatePlayer(player);
+      if (!shouldKill) {
+        this.eliminatePlayer(player);
+      }
     }
-    }
-
-    
   }
 
   eliminatePlayer(player: hz.Player) {
     console.log(`Eliminating player ${player.name.get()}`);
     this.props.stabSFX?.as(hz.AudioGizmo).play();
-    this.sendNetworkBroadcastEvent(Events.playerEliminated, { player });
+    this.sendNetworkBroadcastEvent(Events.playerEliminated, {
+      player,
+      killer: this.currentHolder,
+    });
   }
 
   playerExitedKillbox(player: hz.Player) {
@@ -334,7 +325,9 @@ if (!shouldKill) {
     this.throwForce = THROW_FORCE_MIN;
     this.isCharging = false;
 
-    this.entity.as(hz.AttachableEntity).attachToPlayer(this.owner, hz.AttachablePlayerAnchor.Torso)
+    this.entity
+      .as(hz.AttachableEntity)
+      .attachToPlayer(this.owner, hz.AttachablePlayerAnchor.Torso);
 
     const grabbable = this.entity.as?.(hz.GrabbableEntity);
     //grabbable?.setWhoCanGrab([]);
@@ -345,11 +338,9 @@ if (!shouldKill) {
   }
 
   private unholsterKnife() {
-
     this.knifeHolstered = false;
     this.entity.visible.set(true);
 
- 
     const phys = this.entity.as?.(hz.PhysicalEntity);
     if (phys) {
       phys.interactionMode.set(hz.EntityInteractionMode.Both);
@@ -369,31 +360,32 @@ if (!shouldKill) {
     if (this.knifeHolstered) {
       return;
     } else {
-
-    if (pressed && !this.knifeHolstered) {
-      // Begin charging only on press
-      this.throwForce = 15; // base force
-      this.isCharging = true;
-      this.readyAnimPlayed = false;
-      this.entity.owner.get()?.playAvatarGripPoseAnimationByName("ChargeThrow");
-      this.startCharging();
-      LocalCamera.overrideCameraFOV(65);
-    } else {
-      // Release
-      LocalCamera.overrideCameraFOV(75);
-      const accumulatedForce = this.throwForce;
-      this.stopCharging();
-      const shouldThrow = accumulatedForce > 20; // threshold
-      if (shouldThrow) {
-        this.throwKnife(); // plays Throw animation
-      } else {
-        // Only play cancel if we did NOT throw
-
+      if (pressed && !this.knifeHolstered) {
+        // Begin charging only on press
+        this.throwForce = 15; // base force
+        this.isCharging = true;
+        this.readyAnimPlayed = false;
         this.entity.owner
           .get()
-          ?.playAvatarGripPoseAnimationByName("CancelThrow");
+          ?.playAvatarGripPoseAnimationByName("ChargeThrow");
+        this.startCharging();
+        LocalCamera.overrideCameraFOV(65);
+      } else {
+        // Release
+        LocalCamera.overrideCameraFOV(75);
+        const accumulatedForce = this.throwForce;
+        this.stopCharging();
+        const shouldThrow = accumulatedForce > 20; // threshold
+        if (shouldThrow) {
+          this.throwKnife(); // plays Throw animation
+        } else {
+          // Only play cancel if we did NOT throw
+
+          this.entity.owner
+            .get()
+            ?.playAvatarGripPoseAnimationByName("CancelThrow");
+        }
       }
-    }
     }
   }
 

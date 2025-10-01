@@ -29,9 +29,10 @@ export const Events = {
     "playerRolesAssigned"
   ),
 
-  playerEliminated: new hz.LocalEvent<{ player: hz.Player }>(
-    "playerEliminated"
-  ),
+  playerEliminated: new hz.LocalEvent<{
+    player: hz.Player;
+    killer: hz.Player | null;
+  }>("playerEliminated"),
   checkForEndCondition: new hz.LocalEvent<{ player: hz.Player }>(
     "checkForEndCondition"
   ),
@@ -120,6 +121,9 @@ export class PlayerRoles {
 }
 
 export class PlayerList {
+  forEach(arg0: (p: hz.Player) => void) {
+    throw new Error("Method not implemented.");
+  }
   list: hz.Player[] = [];
 
   size(): number {

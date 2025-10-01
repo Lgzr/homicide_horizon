@@ -6,6 +6,7 @@ import {
   PlayerRoles,
   WinState,
 } from "./GameUtil";
+import LeaderboardEvents from "./LeaderboardEvents";
 
 class PlayerManager extends hz.Component<typeof PlayerManager> {
   static propsDefinition = {
@@ -16,6 +17,7 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
 
   public matchPlayers: MatchPlayers = new MatchPlayers();
   public PlayerRoles: PlayerRoles = new PlayerRoles();
+  public selectedMurderer!: hz.Player;
 
   preStart(): void {
     this.connectLocalBroadcastEvent(
@@ -34,14 +36,14 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
       (data: { playerShooting: hz.Player; playerShot: hz.Player }) => {
         console.log("Player shot event received:", data);
         this.shouldStunPlayer(data.playerShooting, data.playerShot);
-        this.playerEliminated(data.playerShot);
+        this.playerEliminated(data.playerShot, data.playerShooting);
       }
     );
 
     this.connectNetworkBroadcastEvent(
       Events.playerEliminated,
-      (data: { player: hz.Player }) => {
-        this.playerEliminated(data.player);
+      (data: { player: hz.Player; killer: hz.Player }) => {
+        this.playerEliminated(data.player, data.killer);
       }
     );
 
@@ -117,9 +119,12 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
 
   private moveAllMatchPlayersToLobby() {
     /* Gets all Match players using our helper classes*/
-    const matchPlayers = this.world.getPlayers(); //this.matchPlayers.getPlayersInMatch();
+    const matchPlayers = this.matchPlayers.getPlayersInMatch(); //this.matchPlayers.getPlayersInMatch();
     matchPlayers.forEach((p: hz.Player) => {
       this.movePlayerFromMatchToLobby(p);
+      this.sendLocalBroadcastEvent(LeaderboardEvents.IncrementRoundsPlayed, {
+        player: p,
+      });
     });
   }
 
@@ -143,6 +148,7 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
       matchPlayers.list[randomIndex],
       PlayerRoles.Murderer
     );
+    this.selectedMurderer = matchPlayers.list[randomIndex];
 
     // show popup for roles innocent & murderer
     for (const player of matchPlayers.list) {
@@ -174,12 +180,12 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
         3
       );
       this.async.setTimeout(() => {
-        playerShot.unfocusUI();
+        playerShooting.unfocusUI();
       }, 3000);
     }
   }
 
-  playerEliminated(player: hz.Player) {
+  playerEliminated(player: hz.Player, killer: hz.Player | null) {
     if (!player) {
       console.warn("playerEliminated called with undefined player");
       return;
@@ -187,9 +193,7 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
 
     if (this.matchPlayers.getPlayersInMatch().includes(player)) {
       this.PlayerRoles.assignRole(player, PlayerRoles.Spectator);
-
       player.playAvatarGripPoseAnimationByName("Die");
-
       // add a delay before teleporting to lobby
       this.async.setTimeout(() => {
         this.matchPlayers.moveToLobby(player);
@@ -198,6 +202,24 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
       }, 1000);
 
       this.checkForEndConditions();
+    }
+
+    if (this.PlayerRoles.getRole(player) === PlayerRoles.Murderer && killer) {
+      this.sendLocalBroadcastEvent(
+        LeaderboardEvents.IncrementMurdererEliminations,
+        {
+          player: killer,
+          role: "Murderer",
+        }
+      );
+    } else if (
+      this.PlayerRoles.getRole(player) === PlayerRoles.Innocent &&
+      killer
+    ) {
+      this.sendLocalBroadcastEvent(LeaderboardEvents.IncrementEliminations, {
+        player: killer,
+        role: "Innocent",
+      });
     }
   }
 
@@ -214,6 +236,13 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
 
     if (innocentPlayers.length === 0) {
       // No innocent players left
+      this.sendLocalBroadcastEvent(
+        LeaderboardEvents.IncrementRoundsWonAsMurderer,
+        {
+          player: this.selectedMurderer,
+        }
+      );
+
       this.sendLocalBroadcastEvent(Events.gameOver, {
         winState: WinState.MurdererWins,
       });
@@ -221,6 +250,19 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
 
     if (murdererPlayers.length === 0) {
       // Murderer has been killed
+
+      // foreach loop that grabs the remaining players and increments RoundsWonAsInnocent
+      this.matchPlayers.getPlayersInMatch().forEach((player) => {
+        if (this.PlayerRoles.getRole(player) === PlayerRoles.Innocent) {
+          this.sendLocalBroadcastEvent(
+            LeaderboardEvents.IncrementRoundsWonAsInnocent,
+            {
+              player,
+            }
+          );
+        }
+      });
+
       this.sendLocalBroadcastEvent(Events.gameOver, {
         winState: WinState.InnocentsWin,
       });
