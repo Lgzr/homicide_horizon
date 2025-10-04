@@ -1,7 +1,6 @@
 import { Events, GameState } from "GameUtil";
 import * as hz from "horizon/core";
 import LocalCamera from "horizon/camera";
-import { PlayerSettings } from "Player";
 
 const THROW_FORCE_MIN = 15;
 const THROW_FORCE_MAX = 50;
@@ -274,15 +273,34 @@ class KnifeController extends hz.Component<typeof KnifeController> {
     // Map throwForce (30-50) to speed; base speed 25 from example, scale up modestly
     const normalized = Math.min(Math.max(this.throwForce, 0), 50) / 50; // 0..1
     const speed = 15 + normalized * 20; // 15 to 35 range
-    // Pitch: slight arc; example used 30. Allow a little more when fully charged
-    const pitch = 1; // 20..35 degrees
     const playAnimation = true;
 
-    const options = { speed, pitch, yaw: 0, playAnimation } as any; // cast if needed by runtime
+    // Get camera direction for perfect alignment
+    const cameraForward = LocalCamera.forward.get();
+
+    // Calculate yaw (horizontal rotation) from camera forward vector
+    const yaw = Math.atan2(cameraForward.x, cameraForward.z) * (180 / Math.PI);
+
+    // Calculate pitch (vertical angle) from camera forward vector
+    const pitch = Math.asin(cameraForward.y) * (180 / Math.PI);
+
+    // Add slight forward rotation (roll) for visual effect
+    const roll = 15; // degrees
+
+    const options = {
+      speed,
+      pitch: pitch + 5, // Add slight upward arc to camera pitch
+      yaw,
+      roll,
+      playAnimation,
+    } as any;
+
     console.log(
       `[KnifeController] throwHeldItem speed=${speed.toFixed(
         1
-      )} pitch=${pitch.toFixed(1)} (force=${this.throwForce})`
+      )} pitch=${pitch.toFixed(1)} yaw=${yaw.toFixed(1)} roll=${roll} (force=${
+        this.throwForce
+      })`
     );
     try {
       player.throwHeldItem(options);
@@ -363,8 +381,7 @@ class KnifeController extends hz.Component<typeof KnifeController> {
     } else {
       if (pressed && !this.knifeHolstered) {
         // Begin charging only on press
-        this.entity.owner.get()?.locomotionSpeed.set(0.8);
-          this.throwForce = 15; // base force
+        this.throwForce = 15; // base force
         this.isCharging = true;
         this.readyAnimPlayed = false;
         this.entity.owner
@@ -375,7 +392,6 @@ class KnifeController extends hz.Component<typeof KnifeController> {
       } else {
         // Release
         LocalCamera.overrideCameraFOV(75);
-        this.entity.owner.get()?.locomotionSpeed.set(PlayerSettings.WalkSpeed);
         const accumulatedForce = this.throwForce;
         this.stopCharging();
         const shouldThrow = accumulatedForce > 20; // threshold

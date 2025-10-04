@@ -7,6 +7,7 @@ import {
   WinState,
 } from "./GameUtil";
 import LeaderboardEvents from "./LeaderboardEvents";
+import { PlayerSettings } from "Player";
 
 class PlayerManager extends hz.Component<typeof PlayerManager> {
   static propsDefinition = {
@@ -69,7 +70,8 @@ class PlayerManager extends hz.Component<typeof PlayerManager> {
 
   private handleOnPlayerEnterWorld(player: hz.Player): void {
     this.matchPlayers.addNewPlayer(player);
-  }
+    player.locomotionSpeed.set(PlayerSettings.WalkSpeed);
+    player.jumpSpeed.set(PlayerSettings.JumpHeight); }
 
   /** When a player leaves the world,
    * Remove that player from the PlayerMap.
