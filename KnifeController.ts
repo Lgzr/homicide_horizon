@@ -1,6 +1,7 @@
 import { Events, GameState } from "GameUtil";
 import * as hz from "horizon/core";
 import LocalCamera from "horizon/camera";
+import { PlayerSettings } from "Player";
 
 const THROW_FORCE_MIN = 15;
 const THROW_FORCE_MAX = 50;
@@ -33,6 +34,8 @@ class KnifeController extends hz.Component<typeof KnifeController> {
   private suppressNextDrop = false;
   private currentHolder: hz.Player | null = null;
   private zHolsterAction: hz.PlayerInputAction | null = null;
+  private returnTimer: number | null = null; // Timer for auto-return after throw
+  private readonly KNIFE_SPEED_BOOST = 1.2; // 20% speed boost when holding knife
 
   preStart(): void {
     this.knife = (this.props.knife as hz.Entity) ?? this.entity;
@@ -116,6 +119,9 @@ class KnifeController extends hz.Component<typeof KnifeController> {
       this.throwForce = 0;
       this.isCharging = false;
       this.readyAnimPlayed = false;
+      
+      // Cancel any active return timer
+      this.cancelReturnTimer();
     }
   }
 
@@ -133,6 +139,9 @@ class KnifeController extends hz.Component<typeof KnifeController> {
     this.currentHolder = player;
     this.props.trail?.as(hz.TrailGizmo)?.stop();
 
+    // Cancel return timer if player picks up the knife
+    this.cancelReturnTimer();
+
     this.sendLocalBroadcastEvent(Events.knifeHeldUpdated, {
       entity: this.entity,
       player: player,
@@ -142,6 +151,9 @@ class KnifeController extends hz.Component<typeof KnifeController> {
 
     LocalCamera.setCameraModeThirdPerson();
     LocalCamera.overrideCameraFOV(20);
+
+    // Apply speed boost when holding knife
+    player.locomotionSpeed.set(PlayerSettings.WalkSpeed * this.KNIFE_SPEED_BOOST);
 
     console.log(
       `${this.entity.name.get()}> was grabbed by <${player.name.get()}`
@@ -172,6 +184,9 @@ class KnifeController extends hz.Component<typeof KnifeController> {
     console.log(
       `${this.entity.name.get()}> was dropped by <${player.name.get()}`
     );
+
+    // Reset player speed to normal when dropping knife
+    player.locomotionSpeed.set(PlayerSettings.WalkSpeed);
 
     this.sendLocalBroadcastEvent(Events.knifeHeldUpdated, {
       entity: this.entity,
@@ -288,9 +303,16 @@ class KnifeController extends hz.Component<typeof KnifeController> {
       this.entity.owner.get()?.playAvatarGripPoseAnimationByName("Throw");
       this.thrown = true;
       this.props.trail?.as(hz.TrailGizmo)?.play();
+
+      // Start auto-return timer (10 seconds)
+      this.startReturnTimer();
     } catch (e) {
       console.warn("throwHeldItem failed", e);
     }
+    
+    // Reset player speed to normal after throwing
+    player.locomotionSpeed.set(PlayerSettings.WalkSpeed);
+    
     this.stopCharging();
     this.disconnectInputs();
     this.throwForce = THROW_FORCE_MIN; // reset
@@ -325,6 +347,9 @@ class KnifeController extends hz.Component<typeof KnifeController> {
     this.throwForce = THROW_FORCE_MIN;
     this.isCharging = false;
 
+    // Reset player speed to normal when holstering
+    this.owner.locomotionSpeed.set(PlayerSettings.WalkSpeed);
+
     this.entity
       .as(hz.AttachableEntity)
       .attachToPlayer(this.owner, hz.AttachablePlayerAnchor.Torso);
@@ -350,8 +375,12 @@ class KnifeController extends hz.Component<typeof KnifeController> {
 
     this.knifeHeld = true;
     this.setupControlsForPlayer(this.owner);
-    LocalCamera.setCameraModeThirdPerson();
-    LocalCamera.overrideCameraFOV(20);
+    
+    // Apply speed boost when unholstering
+    this.owner.locomotionSpeed.set(PlayerSettings.WalkSpeed * this.KNIFE_SPEED_BOOST);
+    
+    //LocalCamera.setCameraModeThirdPerson();
+    LocalCamera.overrideCameraFOV(90);
   }
 
   aimKnifeToggle(action: hz.PlayerInputAction, pressed: boolean) {
@@ -362,7 +391,8 @@ class KnifeController extends hz.Component<typeof KnifeController> {
     } else {
       if (pressed && !this.knifeHolstered) {
         // Begin charging only on press
-        this.throwForce = 15; // base force
+        this.entity.owner.get()?.locomotionSpeed.set(0.8);
+          this.throwForce = 15; // base force
         this.isCharging = true;
         this.readyAnimPlayed = false;
         this.entity.owner
@@ -373,14 +403,16 @@ class KnifeController extends hz.Component<typeof KnifeController> {
       } else {
         // Release
         LocalCamera.overrideCameraFOV(75);
+        this.entity.owner.get()?.locomotionSpeed.set(PlayerSettings.WalkSpeed);
         const accumulatedForce = this.throwForce;
         this.stopCharging();
         const shouldThrow = accumulatedForce > 20; // threshold
         if (shouldThrow) {
+          this.entity.owner.get()?.locomotionSpeed.set(PlayerSettings.WalkSpeed);
           this.throwKnife(); // plays Throw animation
         } else {
           // Only play cancel if we did NOT throw
-
+this.entity.owner.get()?.locomotionSpeed.set(PlayerSettings.WalkSpeed);
           this.entity.owner
             .get()
             ?.playAvatarGripPoseAnimationByName("CancelThrow");
@@ -415,6 +447,56 @@ class KnifeController extends hz.Component<typeof KnifeController> {
       this.chargeTimer = null;
     }
     this.isCharging = false;
+  }
+
+  private startReturnTimer() {
+    // Cancel any existing timer first
+    this.cancelReturnTimer();
+
+    console.log("[KnifeController] Starting 10-second auto-return timer");
+    
+    this.returnTimer = this.async.setTimeout(() => {
+      this.returnKnifeToOwner();
+      this.returnTimer = null;
+    }, 10000); // 10 seconds
+  }
+
+  private cancelReturnTimer() {
+    if (this.returnTimer !== null) {
+      console.log("[KnifeController] Cancelling auto-return timer (knife picked up)");
+      this.async.clearTimeout(this.returnTimer);
+      this.returnTimer = null;
+    }
+  }
+
+  private returnKnifeToOwner() {
+    if (!this.lastThrower) {
+      console.warn("[KnifeController] Cannot return knife: no last thrower");
+      return;
+    }
+
+    console.log(`[KnifeController] Auto-returning knife to ${this.lastThrower.name.get()}`);
+
+    // Attach knife to the player's torso (holstered)
+    const attachable = this.entity.as?.(hz.AttachableEntity);
+    if (attachable) {
+      attachable.attachToPlayer(
+        this.lastThrower,
+        hz.AttachablePlayerAnchor.Torso
+      );
+      this.entity.visible.set(false);
+      this.knifeHolstered = true;
+      
+      // Reset knife state
+      this.thrown = false;
+      this.props.trail?.as(hz.TrailGizmo)?.stop();
+      
+      // Reset interaction mode
+      const physEnt = this.entity.as?.(hz.PhysicalEntity);
+      if (physEnt) {
+        physEnt.interactionMode.set(hz.EntityInteractionMode.Both);
+      }
+    }
   }
 
   disconnectInputs() {

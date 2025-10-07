@@ -41,6 +41,12 @@ export const Events = {
     "selectedMurderer"
   ),
 
+  selectedDetective: new hz.LocalEvent<{ player: hz.Player }>(
+    "selectedDetective"
+  ),
+
+  equipRoleWeapons: new hz.LocalEvent<{}>("equipRoleWeapons"),
+
   knifeHeldUpdated: new hz.LocalEvent<{
     player: hz.Player;
     holdingKnife: boolean;
@@ -86,6 +92,13 @@ export const Events = {
     player: hz.Player;
     entity: hz.Entity;
   }>("spectateModeEnded"),
+
+  assignPlayerScript: new hz.LocalEvent<{
+    player: hz.Player;
+    playerIndex: number;
+  }>("assignPlayerScript"),
+
+  returnPlayerScript: new hz.LocalEvent<{}>("returnPlayerScript"),
 };
 
 export function playersEqual(
@@ -99,6 +112,7 @@ export function playersEqual(
 export class PlayerRoles {
   static Innocent: string = "Innocent";
   static Murderer: string = "Murderer";
+  static Detective: string = "Detective";
   static Spectator: string = "Spectator";
 
   static map: Map<hz.Player, string> = new Map();
@@ -121,13 +135,14 @@ export class PlayerRoles {
 }
 
 export class PlayerList {
-  forEach(arg0: (p: hz.Player) => void) {
-    throw new Error("Method not implemented.");
-  }
   list: hz.Player[] = [];
 
   size(): number {
     return this.list.length;
+  }
+
+  forEach(callback: (p: hz.Player) => void): void {
+    this.list.forEach(callback);
   }
 
   add(p: hz.Player): void {

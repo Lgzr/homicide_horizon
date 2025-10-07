@@ -1,7 +1,7 @@
 import * as hz from "horizon/core";
 import { GameState, Events, WinState } from "./GameUtil";
 import { SFXEvents } from "./SFXEvents";
-import { WeatherEvents } from "WeatherManager";
+import { AmbienceEvents } from "./AmbienceSFXManager";
 
 // Define network events
 // Moved to Events.ts
@@ -165,7 +165,8 @@ class GameManager extends hz.Component<typeof GameManager> {
     this.world.ui.showPopupForEveryone(`Pre-Round Started!`, 3);
     this.props.gameStateText!.as(hz.TextGizmo).text.set(`Pre-Round Started!`);
     this.sendLocalBroadcastEvent(SFXEvents.PlayersSpawnedSFX, {});
-    this.sendLocalBroadcastEvent(WeatherEvents.stormStart, {});
+
+    //this.sendLocalBroadcastEvent(AmbienceEvents.stormStart, {});
     // implement pre-round timer
     this.timerID = this.async.setTimeout(() => {
       this.setGameState(GameState.RoundInProgress);
@@ -184,6 +185,11 @@ class GameManager extends hz.Component<typeof GameManager> {
     this.props.gameStateText!.as(hz.TextGizmo).text.set(`Round Started!`);
     this.sendLocalBroadcastEvent(SFXEvents.RoundStartSFX, {});
     this.sendLocalBroadcastEvent(Events.assignPlayerRoles, {});
+
+    // Equip role-specific weapons after a brief delay to ensure roles are assigned
+    this.async.setTimeout(() => {
+      this.sendLocalBroadcastEvent(Events.equipRoleWeapons, {});
+    }, 500);
 
     // implement 30 second cooldown before parts spawn
     this.timerID = this.async.setTimeout(() => {

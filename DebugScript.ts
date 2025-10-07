@@ -1,7 +1,7 @@
 import Events from "GameUtil";
 import { CodeBlockEvents, Component, Entity, Player } from "horizon/core";
 import { LightEvents } from "LightManager";
-import { WeatherEvents } from "WeatherManager";
+import { AmbienceEvents } from "./AmbienceSFXManager";
 
 class DebugScript extends Component<typeof DebugScript> {
   static propsDefinition = {};
@@ -34,13 +34,13 @@ class DebugScript extends Component<typeof DebugScript> {
     // https://developers.meta.com/horizon-worlds/learn/documentation/code-blocks-and-gizmos/use-the-trigger-zone
     console.log(`Player ${player.name.get()} entered trigger.`);
     //this.sendNetworkBroadcastEvent(Events.checkForEndCondition, {});
-    this.sendNetworkBroadcastEvent(WeatherEvents.stormStart, {});
+    this.sendNetworkBroadcastEvent(AmbienceEvents.stormStart, {});
   }
 
   OnPlayerExitTrigger(player: Player) {
     // Add code here that you want to run when a player exits the trigger.
     // The player parameter will be the player that exited the trigger.
-    this.sendNetworkBroadcastEvent(WeatherEvents.stormEnd, {});
+    this.sendNetworkBroadcastEvent(AmbienceEvents.stormEnd, {});
     console.log(`Player ${player.name.get()} exited trigger.`);
   }
 
